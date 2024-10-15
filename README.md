@@ -10,4 +10,6 @@ For this process four files will be created:
       4) research : will show our findings.
 
 
-**data_fetching**
+**data_fetching:**
+The first two functions (generate_dates, fetch_listing_date) are created due to Binance's API limit requests. For the data that we need there is a limit of 1000 data points per request.
+In our research we will use daily data from 2018, with each day corresponding to one data point. So we need to split our dates in batches of 1000 days.
