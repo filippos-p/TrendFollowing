@@ -1,0 +1,169 @@
+import numpy as np
+import pandas as pd
+import requests
+from datetime import datetime, timedelta
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# The first two functions are created due to Binance's API limit requests.
+# For the data that we need there is a limit of 1000 data points per request.
+# Since we are pulling (daily) data from 2018 we have need to split those data points (days) in batches of 1000.
+
+def generate_dates(start_date, end_date, increment_type, listing_date):
+    dates = []
+    current_date = max(start_date, listing_date)
+
+    lost_hour_start = datetime(2024, 3, 31, 2, 0)
+    lost_hour_end = datetime(2024, 3, 31, 3, 0)
+
+    while current_date <= end_date:
+        if not (lost_hour_start <= current_date < lost_hour_end):
+            dates.append(current_date)
+        if increment_type == '1d':
+            current_date += timedelta(days=1)
+        elif increment_type == '1h':
+            current_date += timedelta(hours=1)
+        elif increment_type == '4h':
+            current_date += timedelta(hours=4)
+        elif increment_type == '5m':
+            current_date += timedelta(minutes=5)
+        elif increment_type == '15m':
+            current_date += timedelta(minutes=15)
+        else:
+            raise ValueError("Invalid increment type. Choose '1d', '1h', '4h', '5m', or '15m'.")
+    
+    return dates
+
+def split_list_into_chunks(dates, chunk_size = 1000):
+    return [dates[i:i + chunk_size] for i in range(0, len(dates), chunk_size)]
+
+
+# This function is redundant now, since it returns a default datetime.
+# But was used to account for different listing dates for different coins.
+
+def fetch_listing_date(symbol):
+    url = f"https://api.binance.com/api/v3/exchangeInfo"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        for s in data.get('symbols', []):
+            if s['symbol'] == symbol:
+                return datetime.fromtimestamp(s.get('onboardDate', 0) / 1000.0)
+
+        raise ValueError(f"Symbol {symbol} not found in exchange info.")
+    except Exception as e:
+        print(f"Error fetching listing date for {symbol}: {e}")
+        return None
+
+
+# Function to fetch Klines data for a specific symbol and time range
+def fetch_klines(symbol, start_time, end_time, interval='1h', limit=1000):
+    url = f"https://api.binance.com/api/v3/klines"
+    params = {
+        'symbol': symbol,
+        'interval': interval,
+        'startTime': int(start_time.timestamp() * 1000),
+        'endTime': int(end_time.timestamp() * 1000),
+        'limit': limit
+    }
+
+    print(f"Fetching {symbol} from {start_time} to {end_time}")  # Debug statement
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()  # Raise an exception for HTTP errors
+    klines = response.json()
+
+    if not klines:
+        print(f"No data for {symbol} from {start_time} to {end_time}")  # Debug statement
+        raise IndexError(f"No data available for {symbol} from {start_time} to {end_time}")
+
+    # Convert the timestamps to datetime objects
+    for kline in klines:
+        kline[0] = datetime.fromtimestamp(kline[0] / 1000.0)
+
+    # Convert the data to a DataFrame
+    df = pd.DataFrame(klines, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore'])
+
+    # Include the symbol in the DataFrame
+    df['symbol'] = symbol
+
+    return df
+
+
+# Function to fetch Klines data for multiple symbols and the time range specified
+def fetch_klines_for_symbols(symbols, start_time, end_time, interval='1h', limit=1000):
+    klines_data = {symbol: pd.DataFrame() for symbol in symbols}
+
+    # Fetch listing dates for each symbol
+    listing_dates = {symbol: fetch_listing_date(symbol) for symbol in symbols}
+
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for symbol in symbols:
+            time_ranges = list(split_list_into_chunks(generate_dates(start_time, end_time, interval, listing_dates[symbol])))
+            for time_range in time_ranges:
+                start_date = time_range[0]
+                end_date = time_range[-1] + pd.Timedelta(minutes=1) if interval == '5m' else time_range[-1] + pd.Timedelta(minutes=5)  # Adjust for the interval
+                futures.append(executor.submit(fetch_klines, symbol, start_date, end_date, interval, limit))
+
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                symbol = result['symbol'][0]
+                klines_data[symbol] = pd.concat([klines_data[symbol], result], ignore_index=True)
+            except (IndexError, requests.exceptions.RequestException) as e:
+                print(f"Error fetching data: {e}")
+
+    return klines_data
+
+
+# Example usage
+if __name__ == "__main__":
+
+    # The choice of the coins to fetch is based on the top 50 by Market Capitalization from https://coinmarketcap.com/ (excluding stablecoins and coins not listed on Binance).
+    # Stablecoins are cryptocurrency coins that are pegged to their respective currency: ie USDT is pegged to the USD (United States Dollar).
+    # Since the most daily trading volume is happening in USDT pairs ('COINNAME'/USDT) we will pull the USDT pairs.
+    # The choice of coins by their Market Capitalization will be explained later in the research process. 
+    # For more robust results: avoiding survivorship bias, we should fetch data from https://coinmarketcap.com/ on a rolling basis, to account for coins that left/entered the top 50 Market Cap. lsit.
+    # Since this is a research repository and not a live trading portfolio illustration we will stick with the top 50 as of now (15/10/2024).
+
+    symbols = [ 'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT',
+                'ICPUSDT', 'ADAUSDT', 'AVAXUSDT', 'SHIBUSDT', 'LINKUSDT', 'ETCUSDT',
+                'DOTUSDT', 'BCHUSDT', 'NEARUSDT', 'LTCUSDT', 'SUIUSDT', 'PEPEUSDT',
+                'ICPUSDT', 'UNIUSDT', 'FETUSDT', 'APTUSDT', 'WIFUSDT', 'TRXUSDT',
+                'SEIUSDT', 'FLOKIUSDT', 'RNDRUSDT', 'STXUSDT', 'FILUSDT', 'OPUSDT',
+               'INJUSDT', 'STXUSDT', 'XLMUSDT', 'FTMUSDT', 'ATOMUSDT', 'RUNEUSDT'
+              ]
+
+    start_time = datetime(2018,1, 1, 0)
+    end_time = datetime.now()
+    interval = '1d'  # 5-minute interval
+    limit = 1000  # Maximum number of data points per request
+    
+    # Fetch listing dates for all symbols
+    listing_dates = {symbol: fetch_listing_date(symbol) for symbol in symbols}
+
+    klines_data = fetch_klines_for_symbols(symbols, start_time, end_time, interval, limit)
+    
+    
+    # Create a list to hold symbols that should be deleted
+    symbols_to_delete = []
+    for symbol in klines_data:
+        if not klines_data[symbol].empty:
+            # Exclude the 'symbol' column from conversion to float
+            float_columns = klines_data[symbol].columns.difference(['symbol', 'timestamp', 'close_time', 'ignore'])
+            klines_data[symbol][float_columns] = klines_data[symbol][float_columns].astype(float)
+            klines_data[symbol]['close_time'] = pd.to_datetime(klines_data[symbol]['close_time'], unit='ms')
+            klines_data[symbol] = klines_data[symbol].sort_values(by='timestamp').reset_index(drop=True)
+        else:
+            print('Symbol '+ symbol +' was not listed on the dates you selected!')
+            symbols_to_delete.append(symbol)
+    
+    
+    # Remove the symbols after the loop is done
+    for symbol in symbols_to_delete:
+        del klines_data[symbol]    
+
+
