@@ -26,3 +26,4 @@ Here we need to note that the closing price is **not tradeable**, so any assumpt
 The function **fetch_klines_for_symbols** performs the previous operation for multiple symbols simultaneously using a ThreadPoolExecutor and also applies the **split_list_into_chunks** function in order to retrieve data for longer than 1000 days.
 
 Lastly we will save our data (which are a Dictionary of DataFrames) in a pickle file, for ease of access.
+
