@@ -167,3 +167,37 @@ if __name__ == "__main__":
         del klines_data[symbol]    
 
 
+import pickle
+import os
+
+def save_dict_to_pickle(data_dict, pickle_file):
+    """
+    Save a dictionary containing DataFrames to a pickle file.
+
+    Parameters:
+    - data_dict: Dictionary where keys are symbols and values are DataFrames.
+    - pickle_file: Path to the pickle file where the dictionary will be saved.
+
+    Returns:
+    - None
+    """
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(data_dict, f)
+
+def load_dict_from_pickle(pickle_file):
+    """
+    Load a dictionary containing DataFrames from a pickle file.
+
+    Parameters:
+    - pickle_file: Path to the pickle file from which the dictionary will be loaded.
+
+    Returns:
+    - data_dict: Dictionary where keys are symbols and values are DataFrames.
+    """
+    with open(pickle_file, 'rb') as f:
+        data_dict = pickle.load(f)
+    return data_dict
+
+pickle_file = 'klines_data.pkl'
+save_dict_to_pickle(klines_data, pickle_file)
+klines_data = load_dict_from_pickle(pickle_file)
