@@ -42,7 +42,8 @@ moving average (from now on we will use exponential moving average and moving av
 
 How are we choosing the lookback windows? First of all there is a heuristic (taken from **https://twitter.com/macrocephalopod**) that says that for two trend signals with lookbacks n1 and n2 on the same asset the correlation of the signals is approximately min(n1, n2)/sqrt(n1 * n2). This means that if we pick the lookbacks in geometric progression (i.e. 2, 4, 8, 16, 32, 64, ...) then any pair of adjacent lookbacks will have the same correlation (which will be 1/sqrt(a), where a is the ratio of the lookback pairs). 
 
-We can see that in practice using the function **correlation_matrix_data** from **utilities**: ![adjacent_lookbacks](https://github.com/user-attachments/assets/c1a8d6b0-a710-490c-9b67-b5cab631c8b7)
+We can see that in practice using the function **correlation_matrix_data** from **utilities**: ![adjacent_lookbacks](https://github.com/user-attachments/assets/0742ea85-2fe4-4b6c-aa51-4039c25f0cd6)
+
 **Note**: We see that the formula **1/sqrt(a)** doesn't work for pairs of adjacent lookbacks. This is because this formula works on detrended price series, but we didn't do that. We approximated that by normalizing for price and recent volatility. 
 Nevertheless the symmetry for adjacent lookback periods still works.
 
@@ -53,9 +54,10 @@ After that our job is almost done for this rule with two major notes.
 First of all on a portfolio level we want to have a universal scale in order to size accordingly our position (this is again not my idea, just an implementation from **Robert Carver**'s book). This means that we want all our trading universe to have the same values when longing/shorting a coin. An easy way to implement this, is to scale the difference so that the mean of the absolute values of all the differences is 10. So +10 is an average buy and -10 an average sell. A forecast of +5 would be a weak buy, and -20 is a very strong sell. Later, depending on our forecast score and the expected volatility we will size our positions. Since we don't want extreme forecast values to gives us an enormous posiziton size, we will cap it at double the expected absolute value, which in our case is +/-20. 
 The forecast scalars are calculated by taking many coins, constructing the EWMAC rule for all the lookback windows and then taking the **average for every (lookback) pair of the absolute value of the forecasts**. Then we divide 10 (which is the expected value that we want our signals to have) with that **average** for every pair. This is our **forecast scalar**. Then we go back to the signal construction and multiply our rule variation with that **scalar**. We achieve this by using the **calculate_vol_adjusted_ewmac** and **ewmac_scalar** functions. 
 
-Below is the distribution of of our average forecast for different symbols and different ewmac variations: ![ewmac_vars_distr](https://github.com/user-attachments/assets/57dc68cb-8c9a-4aa9-b285-9b7e6c3dfa1b)
+Below is the distribution of of our average forecast for different symbols and different ewmac variations: ![ewmac_vars_distr](https://github.com/user-attachments/assets/97e4f453-90a8-44af-bc61-ac6e05f7f45c)
 
-![ewmac_vars_distr_2](https://github.com/user-attachments/assets/8cfbf0dc-70ef-44a7-b684-b173d611c3b0)
+![ewmac_vars_distr_2](https://github.com/user-attachments/assets/16c08dbd-5d4d-4970-8232-4b27f352cbbd)
+**Note:** The very low mean signal to the left is due to (WIF/USDT) pair which was listed in February of 2024, so we haven't see te full distribution of the signals for this symbol.
 
 We see that it works as expected and the scaling applies uniformly across our assets.
 
@@ -70,14 +72,17 @@ We will split the rule variations in two groups. The first will be the shorter l
 At this stage, we have to remember that trading costs. For that reason we want to minimize our trading costs and consequently we need to know the turnover for every rule variation and include this in our weighting decision. We will use another function from **utilities**
 which is called **rule_turnover**. We already suspect that the very fast lookback pairs (i.e. 2_8) will have bigger turnover than the slower pairs. In addition, these are information that could have been known ex ante, when we began to trade this strategy. 
 With that in mind we will show the yearly turnover aggregated for all our trading universe at this date (16th of October, 2024) and at the first year of each symbol's listing. 
-![turnover_diff_example](https://github.com/user-attachments/assets/5430beaf-ebbc-433f-bba2-8f9de5c40295)
+![dnld](https://github.com/user-attachments/assets/3c02c31b-4591-41fc-9952-c816ff849eeb)
+
 
 It is clearly shown that the the fastest pair constantly switches forecast, which incurs costs due to position adjustments.
 
 Also we can visualize for a single asset (BTC/USDT) the different forecast variations:
-![side_2_side_turnover](https://github.com/user-attachments/assets/db7b9644-14fb-4514-a6bc-33e269968e01)
+![side_2_side_turnover](https://github.com/user-attachments/assets/605a8de8-e2c6-4739-a1e7-44713cf9e863)
 
-For that reason and since the two rules variations are highly correlated: ![corr](https://github.com/user-attachments/assets/2128032c-772f-4433-9248-9147f5ea92ea)
+
+For that reason and since the two rules variations are highly correlated: ![corr](https://github.com/user-attachments/assets/eb2e7262-ac6c-4332-8e18-1517057b34de)
+
 
 we will change the weights between 2_8 and 4_16 variation, in order to reduce trading costs. (We did the same for the 16_64 and 32_128 even though the turnover difference isn't that pronounced, for symmetry reasons. Either way this decision doesn't step from any
 information that we couldn't have at the construction of our signal creation.)
