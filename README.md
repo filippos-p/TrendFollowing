@@ -59,4 +59,27 @@ Below is the distribution of of our average forecast for different symbols and d
 
 We see that it works as expected and the scaling applies uniformly across our assets.
 
-Lastly, since we don't know which one of these works better and we don't want to overfit by picking the best based on backtested performance, we will try something else. We will weight them according to their correlations. 
+Lastly, since we don't know which one of these works better and we don't want to overfit by picking the best based on backtested performance, we will try something else. We will weight them according to their correlations, which we shown for EWMAC ruyle on the 
+beginning. 
+Since we don't want to use a computational expensive method like bootstrapping, we will weight them according to the **handcrafting method** from **Robert Carver**'s book, shown in this exempt from his book:
+![handcrafting](https://github.com/user-attachments/assets/cd30cb67-3187-48ef-b88b-24838a688c07)
+
+We will split the rule variations in two groups. The first will be the shorter lookback pairs: 2_8, 4_16, 8_32 and the second will longer ones: 16_64, 32_128, 64_256. This way we can apply the handcrafting method by assigning the weights 42%, 16% and 42% in that order for the corresponding element in the two groups. Then we will divide them by 2, since we have two groups of weights. So the final weights should be: 
+![ewmac_starting_weights](https://github.com/user-attachments/assets/13fa5b83-a1a9-4ca4-bc9c-2bec4c784185)
+
+At this stage, we have to remember that trading costs. For that reason we want to minimize our trading costs and consequently we need to know the turnover for every rule variation and include this in our weighting decision. We will use another function from **utilities**
+which is called **rule_turnover**. We already suspect that the very fast lookback pairs (i.e. 2_8) will have bigger turnover than the slower pairs. In addition, these are information that could have been known ex ante, when we began to trade this strategy. 
+With that in mind we will show the yearly turnover aggregated for all our trading universe at this date (16th of October, 2024) and at the first year of each symbol's listing. 
+![turnover_diff_example](https://github.com/user-attachments/assets/5430beaf-ebbc-433f-bba2-8f9de5c40295)
+
+It is clearly shown that the the fastest pair constantly switches forecast, which incurs costs due to position adjustments.
+
+Also we can visualize for a single asset (BTC/USDT) the different forecast variations:
+![side_2_side_turnover](https://github.com/user-attachments/assets/db7b9644-14fb-4514-a6bc-33e269968e01)
+
+For that reason and since the two rules variations are highly correlated: ![corr](https://github.com/user-attachments/assets/2128032c-772f-4433-9248-9147f5ea92ea)
+
+we will change the weights between 2_8 and 4_16 variation, in order to reduce trading costs. (We did the same for the 16_64 and 32_128 even though the turnover difference isn't that pronounced, for symmetry reasons. Either way this decision doesn't step from any
+information that we couldn't have at the construction of our signal creation.)
+
+Finally we can combine our EWMAC variation into a single one with the weights that we chose. The final 
