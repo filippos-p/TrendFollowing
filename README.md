@@ -98,3 +98,6 @@ The scalar **1.30** we used at the second cell of code is to scale the combined 
 Below is the resulting distribution of the combined signal:
 
 ![combined_ewmac_distr](https://github.com/user-attachments/assets/2932bd43-58c4-43f2-a4f2-f617697a392b)
+
+
+Using the same methodology we will create two more signals, **bolmom** and **breakout**. 
