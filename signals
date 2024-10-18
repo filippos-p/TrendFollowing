@@ -1,0 +1,144 @@
+
+
+def volatility(df, vol_lookback):
+    stdev_returns = (df['close'] - df['close'].shift(1)).ewm(span = vol_lookback).std()
+    return stdev_returns
+
+def ewmac_scalar(fast, slow):
+    
+    scalar = 0
+    
+    if fast == 2 and slow == 8:
+        scalar = 7.85/10
+        
+    elif fast == 4 and slow == 16:
+        scalar = 5.45/10
+        
+    elif fast == 8 and slow == 32:
+        scalar = 3.65/10
+        
+    elif fast == 16 and slow == 64:
+        scalar = 2.45/10
+        
+    elif fast == 32 and slow == 128:
+        scalar = 1.68/10
+        
+    elif fast == 64 and slow == 256:
+        scalar = 1.28/10
+    
+    else:
+        print('Choose appropriate lookback periods!')
+        
+    return scalar
+
+
+for i in klines_data.keys():
+    
+    klines_data[i]['returns'] = klines_data[i]['close'].pct_change()
+    
+    klines_data[i]['volatility'] = (
+        
+#         ( klines_data[i]['returns'].ewm(span = 30).std() +
+#                           klines_data[i]['returns'].ewm(span = 90).std() ) / 2
+        
+        klines_data[i]['returns'].ewm(span = 30).std() #*
+        #np.sqrt(365)  # Annualize the volatility forecast
+    )
+
+
+def calculate_vol_adjusted_ewmac(df, symbol, short_window, long_window, vol_lookback = 30, cap = 20, scale_range = (-20, 20)):
+    
+    scalar = ewmac_scalar(short_window, long_window)
+    
+    df = df[symbol]
+    
+    
+    
+    df[f'ema_short_{short_window}_{long_window}'] = df['close'].ewm(span = short_window, adjust=False).mean()/volatility(df, vol_lookback)
+    
+    df[f'ema_long_{short_window}_{long_window}'] = df['close'].ewm(span = long_window, adjust=False).mean()/volatility(df, vol_lookback)
+    
+    df[f'raw_ewmac_{short_window}_{long_window}'] = (
+        df[f'ema_short_{short_window}_{long_window}'] - df[f'ema_long_{short_window}_{long_window}']
+    )
+    
+    # Volatility adjustment
+    stdev_returns = (df['returns'].ewm(span = 30).std()) #+
+                    #df['returns'].ewm(span = 90).std()) / 2
+                    #df['returns'].rolling(window = 30).std()
+     
+    df[f'vol_adjusted_ewmac_{short_window}_{long_window}'] = (
+        df[f'raw_ewmac_{short_window}_{long_window}'] / stdev_returns
+    )
+    
+    
+    df[f'vol_adjusted_ewmac_clipped_{short_window}_{long_window}'] = (
+        (scalar * 
+         df[f'vol_adjusted_ewmac_{short_window}_{long_window}']).clip(lower=-cap, upper=cap)
+    ) 
+        
+    df.drop([f'vol_adjusted_ewmac_{short_window}_{long_window}',
+             f'ema_short_{short_window}_{long_window}',f'ema_long_{short_window}_{long_window}',
+             f'raw_ewmac_{short_window}_{long_window}'], axis = 1, inplace = True)
+    
+   
+    return df
+
+
+short_look = [2, 4, 8, 16, 32, 64]
+long_look = [8, 16, 32, 64, 128, 256]
+
+for i in symbols_list:
+    for j,k in zip(short_look, long_look):
+        calculate_vol_adjusted_ewmac(klines_data, i, j, k, vol_lookback = 30, cap = 20) 
+
+
+for i in symbols_list:
+    
+    # Create a DataFrame with the weighted columns and fill missing values with 0
+    breakout_df = pd.DataFrame({
+        'vol_adjusted_ewmac_clipped_2_8': (0.08) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_2_8'].reindex_like(klines_data[i]),
+        'vol_adjusted_ewmac_clipped_4_16': (0.21) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_4_16'].reindex_like(klines_data[i]),
+        'vol_adjusted_ewmac_clipped_8_32': (0.21) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_8_32'].reindex_like(klines_data[i]),
+        'vol_adjusted_ewmac_clipped_16_64': (0.08) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_16_64'].reindex_like(klines_data[i]),
+        'vol_adjusted_ewmac_clipped_32_128': (0.21) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_32_128'].reindex_like(klines_data[i]),
+        'vol_adjusted_ewmac_clipped_64_256': (0.21) * klines_data[i].loc[:, 'vol_adjusted_ewmac_clipped_64_256'].reindex_like(klines_data[i])
+    })
+
+    # Compute the sum of valid weights (where the data is not NaN)
+    valid_weights_sum = breakout_df.notna().mul([0.08, 0.21, 0.21, 0.08, 0.21, 0.21], axis = 1).sum(axis = 1)
+    
+    # Compute the weighted average by summing and dividing by valid weight sum
+    klines_data[i]['vol_adjusted_ewmac_clipped_combined'] = breakout_df.sum(axis = 1) / valid_weights_sum
+
+
+for i in klines_data.keys():
+    
+    klines_data[i]['vol_adjusted_ewmac_clipped_combined'] = (
+        (
+        1.30 *
+        klines_data[i]['vol_adjusted_ewmac_clipped_combined']).clip(lower = -20, upper = 20)
+    )
+
+
+ewmac_vars = [
+    'vol_adjusted_ewmac_clipped_2_8',
+       'vol_adjusted_ewmac_clipped_4_16', 'vol_adjusted_ewmac_clipped_8_32',
+       'vol_adjusted_ewmac_clipped_16_64', 'vol_adjusted_ewmac_clipped_32_128',
+       'vol_adjusted_ewmac_clipped_64_256', 'vol_adjusted_ewmac_clipped_combined']
+
+
+df11 = pd.DataFrame(columns = klines_data.keys(), index = ewmac_vars)
+
+for symbol in klines_data.keys():
+    for i in ewmac_vars:
+        df11.at[i, symbol] = klines_data[symbol][i].abs().mean()
+    
+for i in ewmac_vars:
+        df11.at[i, 'mean'] = df11.loc[i, :].mean()
+        
+#print(df11.loc[:, 'mean'].mean())
+
+plt.xlim(4,15)
+plt.hist(df11.loc['vol_adjusted_ewmac_clipped_combined',:]);
+plt.title('Distribution mean forecast for the combined variation.');
