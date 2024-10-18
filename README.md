@@ -87,4 +87,14 @@ For that reason and since the two rules variations are highly correlated: ![corr
 we will change the weights between 2_8 and 4_16 variation, in order to reduce trading costs. (We did the same for the 16_64 and 32_128 even though the turnover difference isn't that pronounced, for symmetry reasons. Either way this decision doesn't step from any
 information that we couldn't have at the construction of our signal creation.)
 
-Finally we can combine our EWMAC variation into a single one with the weights that we chose. The final 
+Finally we can combine our EWMAC variation into a single one with the weights that we chose. The combined signal is given by the code below:
+
+![ewmac_combined](https://github.com/user-attachments/assets/39a76370-ac39-408a-a1fb-7afb96f69cc4)
+
+The scalar **1.30** we used at the second cell of code is to scale the combined signal so the average is still +10. To calculate this we use an excerpt, again from **Robert Carver**'s book, and apply the code below:
+
+![comb_sig_theor_code](https://github.com/user-attachments/assets/3fcf6eb6-79e6-4e71-be64-40c6023294c7)
+
+Below is the resulting distribution of the combined signal:
+
+![combined_ewmac_distr](https://github.com/user-attachments/assets/2932bd43-58c4-43f2-a4f2-f617697a392b)
