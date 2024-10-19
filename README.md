@@ -99,5 +99,59 @@ Below is the resulting distribution of the combined signal:
 
 ![combined_ewmac_distr](https://github.com/user-attachments/assets/2932bd43-58c4-43f2-a4f2-f617697a392b)
 
+Now we will check the performance of our rule. Before we measure it we need to know what constitutes "good" performance. From **https://twitter.com/macrocephalopod/status/1806436278067470524**, we can see the framework for defining good performance.
+
+![ic_perf_bench](https://github.com/user-attachments/assets/13602072-68ab-4c94-af93-582e6feb8dcf)
+
+We find the costs for perpetual futures from binance:
+![trading_fees](https://github.com/user-attachments/assets/0399c125-8de0-426e-8718-6f419f068922)
+
+We will assume the worst case, where we are liquidity takers and use market orders which cost 0.05%. We will even double the trading costs, in order to account for any cases where we need to turnover daily our positions.
+So the costs will be **0.1%**.
+
+Then, we find the average daily standard deviation of returns for all our symbols (which is our 'volatility' column):
+![image](https://github.com/user-attachments/assets/47d89042-0101-41ec-ba89-2802d6bf927b)
+
+We calculate the minimum correlation:
+
+![image](https://github.com/user-attachments/assets/1e551920-f372-4ba2-992f-658e1e9b13de)
+
+This is the absolute minimum, and we want to target about 1.5-2 times that: 
+
+![image](https://github.com/user-attachments/assets/3295d906-7830-4938-b3c0-7edc8f53d8fe)
+
+Using **calculate_ic** from **signals** for the EWMAC rule we find out that the IC is:
+![image](https://github.com/user-attachments/assets/21ceee7a-e988-4029-abf4-9554d5ebd565)
+
+We are almost at our lower limit of our target. 
+To try and improve its performance, we will split our coins into volatility deciles and check the IC by decile:
+
+![image](https://github.com/user-attachments/assets/f971825b-6e93-404e-8477-4adbe958474a)
+
+Our suspicions that trend works better on lowe volatility coins was correct. We now can see an improvement in performance removing the top decile:
+
+![image](https://github.com/user-attachments/assets/843cec5e-7cc8-4942-be4b-8123721ae682)
+
+**Note**: Since we excluded the top decile coins we need to recalculate the average daily vol. of our trading universe (which we expect to be slightly lower), in order to find the new targets for the IC:
+
+![image](https://github.com/user-attachments/assets/fc767dfc-3684-4154-a48b-8154430eb6ef)
+
+We can clearly see the improvement in performance.
 
 Using the same methodology we will create two more signals, **bolmom** and **breakout**. 
+**Bolmom** is the distance to a moving average plus (minus) two standard deviations (the rule is from **https://twitter.com/ScottPh77711570**). For this signal we will equal weight all the variations.
+**Breakout** takes a rolling minimum and maximum for a desired lookback averages them and calculates the distance from them. We will use the same weights as in **vol_adjusted_ewmac_clipped_combined**.
+Finally we will combined these three signals into one and calculate its performance:
+
+![image](https://github.com/user-attachments/assets/2be2ecc3-ad11-45f5-88e4-afcd2653aa52)
+
+If we slice the top decile again:
+
+![image](https://github.com/user-attachments/assets/5bb56b56-ca5c-400d-bf85-0b4d9a3e414f)
+
+Lastly, we check how many days out does our signals have predictive value (again we sliced the top decile, and we will exclude those coins from our portfolio).
+
+![image](https://github.com/user-attachments/assets/211740d7-294b-4e3b-8115-43e560ebb5b1)
+
+We find out that they work the best at the first week and then slightly lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
+All in all we found out that trend is a weak but robust edge.
