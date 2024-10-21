@@ -200,6 +200,7 @@ All in all we conclude that trend is a weak but robust edge and works better whe
 
 
 **Roadmap**: 
+
 **i)** Show how to modify the data fetching function, so we can update daily our dictionary without needing to redownload the data. 
 
 **ii)** Show position sizing, based on volatiltiy targeting.
