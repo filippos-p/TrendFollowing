@@ -173,13 +173,14 @@ we will standardize the other two signals for asset volatility and we will check
 
 Finally we see the improvement for the **combined signal** (sliced top vol. decile): 
 
-![image](https://github.com/user-attachments/assets/9a7c6c49-34c5-41bb-86cc-4ec5e78a7fbb)
+![image](https://github.com/user-attachments/assets/a75c4584-7e71-495c-84b3-972e768bba67)
+
 
 the non volatility adjusted was at **0.0144**
 
 ,and for different forward days:
 
-![image](https://github.com/user-attachments/assets/553b85c4-4426-4600-81e0-438b23ff5909)
+![image](https://github.com/user-attachments/assets/5f6ff7e2-a56d-48b8-882e-c699a13d4a2e)
 
 
 We find out that they work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
