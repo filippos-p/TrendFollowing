@@ -134,7 +134,8 @@ Our suspicions that trend works better on lowe volatility coins was correct. We 
 
 **Note**: Since we excluded the top decile coins we need to recalculate the average daily vol. of our trading universe (which we expect to be slightly lower), in order to find the new targets for the IC:
 
-![image](https://github.com/user-attachments/assets/fc767dfc-3684-4154-a48b-8154430eb6ef)
+![image](https://github.com/user-attachments/assets/5d78d668-b373-47c5-b4f7-13c43c98bcc8)
+
 
 We can clearly see the improvement in performance.
 
