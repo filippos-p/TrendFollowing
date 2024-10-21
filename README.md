@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/4d12a2f5-6634-4542-ac93-7dc7bad42760)In this repo, we will show some of the findings from momentum research on Cryptocurrency markets and then provide a simple idea on portfolio construction.
+In this repo, we will show some of the findings from momentum research on Cryptocurrency markets and then provide a simple idea on portfolio construction.
 For this process four files will be created:
 
       1) data_fetching : will download and store the data that we need for our analysis.
@@ -7,10 +7,10 @@ For this process four files will be created:
       
       3) utilities : will assist with choosing appropriate signal weights in the portfolio.
       
-       4) research : will show our findings.
+      4) research : will show our findings.
 
 
-**data_fetching:**
+**1) data_fetching:**
 
 The first two functions (**generate_dates**, **split_list_into_chunks**) are created due to Binance's API limit requests. For the data that we need there is a limit of 1000 data points per request.
 In our research we will use daily data from 2018, with each day corresponding to one data point. So we need to split our dates in batches of 1000 days.
@@ -32,7 +32,7 @@ Lastly we will save our data (which are a Dictionary of DataFrames) in a pickle 
 
 
 
-**signals:**
+**2) signals:**
 
 At this stage we want to create our signals or trading rules that hopefully can capture the momentum effect. What is momentum and why it happens is a good question, that has varying answers. We won't bother trying to explain possible reason for its existence. 
 Our assumption is that momentum exists in markets and is especially pronounced in Crypto markets and we will try to create signals that can exploit this effect.
@@ -98,6 +98,11 @@ The scalar **1.30** we used at the second cell of code is to scale the combined 
 Below is the resulting distribution of the combined signal:
 
 ![combined_ewmac_distr](https://github.com/user-attachments/assets/2932bd43-58c4-43f2-a4f2-f617697a392b)
+
+
+
+
+**3) research**:
 
 Now we will check the performance of our rule. Before we measure it we need to know what constitutes "good" performance. From **https://twitter.com/macrocephalopod/status/1806436278067470524**, we can see the framework for defining good performance.
 
@@ -182,12 +187,19 @@ the non volatility adjusted was at **0.0144**
 
 ![image](https://github.com/user-attachments/assets/5f6ff7e2-a56d-48b8-882e-c699a13d4a2e)
 
+We find out that trend features work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
+
 These are the features' IC before and after volatility adjustment:
 
 ![image](https://github.com/user-attachments/assets/a1d79f69-b001-4bcd-83c1-ee25f3f336c6)
 
 
-We find out that they work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
+We find out that trend features work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
 
-All in all we found out that trend is a weak but robust edge and works better when adjusting for the volatility of the trading universe's assets.
+All in all we conclude that trend is a weak but robust edge and works better when adjusting for the volatility of the trading universe's assets.
 
+
+**Roadmap**: 
+**i)** Show how to modify the data fetching function, so we can update daily our dictionary without needing to redownload the data. 
+**ii)** Show position sizing, based on volatiltiy targeting.
+**iii)** Update daily the live performance of an implementation of a trend following strategy.
