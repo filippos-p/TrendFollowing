@@ -1,5 +1,15 @@
 import pandas as pd
 import numpy as np
+import pickle
+import os
+
+# We will save our data in a pickle file, in order to load easily our data, and gives us optionality for future upgrades where we will run the data fetch functions daily, and concatenate our daily data with the saved ones.
+pickle_file = 'klines_data.pkl'
+
+#save_dict_to_pickle(klines_data, pickle_file)
+klines_data = load_dict_from_pickle(pickle_file)
+klines_data
+
 
 ## We will split, the coins by volatility decile. We could do it more efficiently but the code stays for practical reasons
 
