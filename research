@@ -1,0 +1,154 @@
+import pandas as pd
+import numpy as np
+
+## We will split, the coins by volatility decile. We could do it more efficiently but the code stays for practical reasons
+
+vol_of_coins = []
+for i in symbols_list:
+    vol_of_coins.append(calculate_annualized_volatility(klines_data[i])[0])
+    
+percentiles_all_coins = np.percentile(vol_of_coins, np.arange(0,100,10))
+
+vol_of_coins = []
+for i in symbols_list:
+    vol_of_coins.append([i, calculate_annualized_volatility(klines_data[i])[0]])
+
+
+first = []
+second = []
+third = []
+fourth = []
+fifth = []
+sixth = []
+seventh = []
+eigth = []
+ninth = []
+tenth = []
+
+for i in range(len(vol_of_coins)): 
+        
+    if percentiles_all_coins[0] <= vol_of_coins[i][1] <= percentiles_all_coins[1]:
+        first.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[1] < vol_of_coins[i][1] <= percentiles_all_coins[2]:
+        second.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+    
+    if percentiles_all_coins[2] < vol_of_coins[i][1] <= percentiles_all_coins[3]:
+        third.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[3] < vol_of_coins[i][1] <= percentiles_all_coins[4]:
+        fourth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[4] < vol_of_coins[i][1] <= percentiles_all_coins[5]:
+        fifth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+    
+    if percentiles_all_coins[5] < vol_of_coins[i][1] <= percentiles_all_coins[6]:
+        sixth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[6] < vol_of_coins[i][1] <= percentiles_all_coins[7]:
+        seventh.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[7] < vol_of_coins[i][1] <= percentiles_all_coins[8]:
+        eigth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if percentiles_all_coins[8] < vol_of_coins[i][1] <= percentiles_all_coins[9]:
+        ninth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    if vol_of_coins[i][1] > percentiles_all_coins[9]:
+        tenth.append( [vol_of_coins[i][0], vol_of_coins[i][1]] )
+        
+    
+
+        
+names1 = [inner_list[0] for inner_list in first]
+names2 = [inner_list[0] for inner_list in second]
+names3 = [inner_list[0] for inner_list in third]
+names4 = [inner_list[0] for inner_list in fourth]
+names5 = [inner_list[0] for inner_list in fifth]
+names6 = [inner_list[0] for inner_list in sixth]
+names7 = [inner_list[0] for inner_list in seventh]
+names8 = [inner_list[0] for inner_list in eigth]
+names9 = [inner_list[0] for inner_list in ninth]
+names10 = [inner_list[0] for inner_list in tenth]
+
+all_names = [names1,names2,names3,names4,names5,
+            names6,names7,names8,names9,names10,
+            ]
+
+
+def calculate_ic(data, forecast_col, returns_col, vol_column, forward_rets = 1):
+    """
+    Calculate Information Coefficient (IC) between forecast and next day's returns.
+    
+    Parameters:
+    - data: pd.DataFrame containing forecast and returns columns.
+    - forecast_col: The name of the column with forecasts (scaled between -1 and 1).
+    - returns_col: The name of the column with volatility-adjusted returns.
+    
+    Returns:
+    - IC value: Spearman correlation (Information Coefficient).
+    """
+    # Step 1: Normalize forecast column
+    data['normalized_forecast'] = data[forecast_col].shift(1) / data[forecast_col].std() # So it will have an std of 1
+                                                                                        #data[forecast_col].abs().max()
+    
+    data['vol_adj_returns'] = data[returns_col] / data[vol_column]
+
+    data['next_day_vol_adj_returns'] = data['vol_adj_returns'].shift(-forward_rets)
+    
+    
+    # Step 3: Calculate Spearman correlation (IC)
+    ic = data[['normalized_forecast', 'next_day_vol_adj_returns']].corr(method = 'spearman').iloc[0, 1]
+    
+    return ic
+
+# Example usage:
+# Assuming your DataFrame `klines_data` contains a 'forecast' column and a 'vol_adjusted_returns' column
+ic_list = []
+ic_per_decile = []
+for symbol in all_names[:9]:
+    for subsymbol in symbol:
+        ic_list.append(calculate_ic(klines_data[subsymbol], 'vol_adjusted_ewmac_clipped_combined', 'returns', 'volatility'))
+    ic_per_decile.append(np.mean(ic_list))
+
+ic_per_rule = []
+for symbol in all_names[:9]:#klines_data.keys():
+    for subsymbol in symbol:
+        ic_per_rule.append(calculate_ic(klines_data[subsymbol], 'vol_adjusted_ewmac_clipped_combined', 'returns', 'volatility'))
+        
+np.round(pd.DataFrame(ic_per_rule).dropna().mean(),4)[0]
+
+
+plt.figure(figsize = (9,7))
+plt.plot(np.arange(1, 10), ic_per_decile, label = f'Mean IC: {np.round(pd.DataFrame(ic_per_rule).dropna().mean(),4)[0]}') 
+plt.title('vol_adjusted_ewmac_clipped_combined (vol standardized) IC by volatility decile');
+plt.xlabel('Decile');
+plt.ylabel('IC Value');
+plt.legend();
+
+
+forward_rets_values = []
+for i in range(1, 16) :
+    ic_per_rule = []
+    for symbol in all_names[:9]:#klines_data.keys():
+        for subsymbol in symbol:
+            ic_per_rule.append(calculate_ic(klines_data[subsymbol], 'vol_adjusted_ewmac_clipped_combined', 'returns', 'volatility', i))
+        mean_i = pd.DataFrame(ic_per_rule).dropna().mean()
+    forward_rets_values.append(mean_i)  
+
+
+
+# Now plot the accumulated lists
+plt.figure(figsize = (16,10))
+plt.plot(np.arange(1,16), forward_rets_values, marker='o', linestyle='', color='b', label=f'Mean IC')
+
+# Customize the plot
+plt.xlabel('Forward Returns (Days)')
+plt.ylabel('Mean IC')
+plt.ylim(-0.01, 0.025)
+plt.title('Mean IC (vol_adjusted_ewmac_clipped_combined) for Different Forward Returns')
+plt.grid(True)
+plt.legend()
+
+# Show the plot
+plt.show()
