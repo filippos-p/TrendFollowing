@@ -205,4 +205,10 @@ All in all we conclude that trend is a weak but robust edge and works better whe
 
 **ii)** Show position sizing, based on volatiltiy targeting.
 
+      Below is a showcase of how a continuous forecast looks.
+
+![image](https://github.com/user-attachments/assets/1e950201-8656-42dc-8455-85fbadd7ae27)
+
+
+
 **iii)** Update daily the live performance of an implementation of a trend following strategy.
