@@ -1,4 +1,4 @@
-In this repo, we will show some of the findings from momentum research on Cryptocurrency markets and then provide a simple idea on portfolio construction.
+![image](https://github.com/user-attachments/assets/4d12a2f5-6634-4542-ac93-7dc7bad42760)In this repo, we will show some of the findings from momentum research on Cryptocurrency markets and then provide a simple idea on portfolio construction.
 For this process four files will be created:
 
       1) data_fetching : will download and store the data that we need for our analysis.
@@ -142,6 +142,11 @@ We can clearly see the improvement in performance.
 Using the same methodology we will create two more signals, **bolmom** and **breakout**. 
 **Bolmom** is the distance to a moving average plus (minus) two standard deviations (the rule is from **https://twitter.com/ScottPh77711570**). For this signal we will equal weight all the variations.
 **Breakout** takes a rolling minimum and maximum for a desired lookback averages them and calculates the distance from them. We will use the same weights as in **vol_adjusted_ewmac_clipped_combined**.
+We find out that for these two signals the mean forecast is better distributed around 10 than in EWMAC, probably due to the volatiltiy and the min/max component in the construction of the these two.
+
+![image](https://github.com/user-attachments/assets/5a7ced6e-76b7-437b-b3b5-8a25b31607db)
+
+
 Finally we will combined these three signals into one and calculate its performance:
 
 ![image](https://github.com/user-attachments/assets/2be2ecc3-ad11-45f5-88e4-afcd2653aa52)
@@ -154,5 +159,30 @@ Lastly, we check how many days out does our signals have predictive value (again
 
 ![image](https://github.com/user-attachments/assets/211740d7-294b-4e3b-8115-43e560ebb5b1)
 
-We find out that they work the best at the first week and then slightly lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
-All in all we found out that trend is a weak but robust edge.
+
+On the construction of the EWMAC we volatiltiy standardized (returns std) the signal even after we standardized for price volatility. With that in mind and the volatility decile improvements for universe selection,
+we will standardize the other two signals for asset volatility and we will check their respective performance:
+
+**Before volatility adjustment**:
+
+![signals_by_decile](https://github.com/user-attachments/assets/4a9f654e-aa9a-41c6-abb9-f7d7320b606a)
+
+**After**:
+
+![signals_vol_stand_by_decile](https://github.com/user-attachments/assets/b041b37d-54fc-4514-9e8d-8a899f2eb391)
+
+Finally we see the improvement for the **combined signal** (sliced top vol. decile): 
+
+![image](https://github.com/user-attachments/assets/9a7c6c49-34c5-41bb-86cc-4ec5e78a7fbb)
+
+the non volatility adjusted was at **0.0144**
+
+,and for different forward days:
+
+![image](https://github.com/user-attachments/assets/553b85c4-4426-4600-81e0-438b23ff5909)
+
+
+We find out that they work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
+
+All in all we found out that trend is a weak but robust edge and works better when adjusting for the volatility of the trading universe's assets.
+
