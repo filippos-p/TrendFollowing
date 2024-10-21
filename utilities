@@ -1,0 +1,94 @@
+def rules_and_sequences():
+    
+    all_rules_dict = {
+    
+    'vol_adjusted_ewmac_clipped_2_8' : 0,
+    'vol_adjusted_ewmac_clipped_4_16' : 0,
+    'vol_adjusted_ewmac_clipped_8_32' : 0,
+    'vol_adjusted_ewmac_clipped_16_64' : 0,
+    'vol_adjusted_ewmac_clipped_32_128' : 0,
+    'vol_adjusted_ewmac_clipped_64_256' : 0,
+    
+    'breakout_10' : 0,
+    'breakout_20' : 0,
+    'breakout_40' : 0,
+    'breakout_80' : 0,
+    'breakout_160' : 0,
+    'breakout_320' : 0,
+        
+    'bolmom_8' : 0,
+    'bolmom_16' : 0,
+    'bolmom_32' : 0,
+    'bolmom_64' : 0,
+    'bolmom_128' : 0,
+    'bolmom_256' : 0
+}
+    
+    rules_sequence = {
+    
+    'vol_adjusted_ewmac_clipped' : 0,
+    'breakout' : 6,
+    'bolmom' : 12
+    
+}
+    return all_rules_dict, rules_sequence
+
+
+def rule_turnover(prices_df, symbols_list, rule):
+    
+    all_rules_dict = rules_and_sequences()[0]
+    rules_sequence = rules_and_sequences()[1]
+    
+    try:
+        seq_pos = rules_sequence[rule]
+        rule_variations = list(all_rules_dict.keys())[seq_pos + 0 : seq_pos + 6]
+        
+    except:
+        if isinstance(rule, str):
+            rule_variations = [rule]  
+        else:
+            rule_variations = rule 
+    
+    symbol_rule_variations_df = pd.DataFrame(columns = rule_variations, index = symbols_list)
+    
+    for symbol in symbols_list:
+        for rule in rule_variations:
+            symbol_rule_variations_df.loc[symbol, rule] = 365 * (prices_df[symbol][rule][:365]/10).diff().abs().mean()
+    
+    return symbol_rule_variations_df
+
+def correlation_matrix_data(prices_df, symbols_list, rule):
+    
+    all_rules_dict = rules_and_sequences()[0]
+    rules_sequence = rules_and_sequences()[1]
+    
+    try:
+        seq_pos = rules_sequence[rule]
+        rule_variations = list(all_rules_dict.keys())[seq_pos + 0 : seq_pos + 6]
+        
+    except:
+        if isinstance(rule, str):
+            rule_variations = [rule]  
+        else:
+            rule_variations = rule 
+
+    symbol_rule_variations_df = pd.DataFrame(columns = rule_variations)
+    
+    all_symbols_cors_df = pd.DataFrame(0, columns = rule_variations, index = rule_variations)
+    
+    valid_count = 0
+    
+    for symbol in symbols_list:
+        for lookback_window in rule_variations:
+            symbol_rule_variations_df.loc[:, lookback_window] = prices_df[symbol][lookback_window]
+            
+        # Drop rows with NaNs before calculating correlation
+        valid_data = symbol_rule_variations_df.dropna()
+        
+        if not valid_data.empty:
+            valid_count += 1
+            all_symbols_cors_df += symbol_rule_variations_df.corr()
+
+    all_symbols_cors_df_scaled  = all_symbols_cors_df/(valid_count)
+    
+    return all_symbols_cors_df_scaled
