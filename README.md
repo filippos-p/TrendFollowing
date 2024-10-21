@@ -182,6 +182,10 @@ the non volatility adjusted was at **0.0144**
 
 ![image](https://github.com/user-attachments/assets/5f6ff7e2-a56d-48b8-882e-c699a13d4a2e)
 
+These are the features' IC before and after volatility adjustment:
+
+![image](https://github.com/user-attachments/assets/a1d79f69-b001-4bcd-83c1-ee25f3f336c6)
+
 
 We find out that they work the best at the first week and then gradually lose accuracy. Nevertheless, trend shows robustness two weeks out of the signal.
 
