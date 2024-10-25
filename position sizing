@@ -3,18 +3,7 @@ import numpy as np
 
 @njit
 def volatility_targeting_with_signal_numba(closes, volatilities, signals, target_volatility):
-    """
-    Numba-optimized implementation of volatility targeting strategy.
-    
-    Parameters:
-    closes: np.array of close prices
-    volatilities: np.array of volatility values
-    signals: np.array of signal values
-    target_volatility: float, target volatility level
-    
-    Returns:
-    tuple of numpy arrays (total_capitals, block_values, vol_targs, vol_scalars, position_sizes, daily_pnls)
-    """
+
     length = len(closes)
     initial_capital = 1000.0
     
