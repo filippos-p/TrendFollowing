@@ -231,4 +231,5 @@ What is notable is on March 20, we had a forecast of +16 (out of 20), but our po
 **Roadmap**: 
 
 **i)** Show how to modify the data fetching function, so we can update daily our dictionary without needing to redownload the data. 
+
 **ii)** Update daily the live performance of an implementation of a trend following strategy.
