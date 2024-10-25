@@ -1,0 +1,158 @@
+from numba import njit
+import numpy as np
+
+@njit
+def volatility_targeting_with_signal_numba(closes, volatilities, signals, target_volatility):
+    """
+    Numba-optimized implementation of volatility targeting strategy.
+    
+    Parameters:
+    closes: np.array of close prices
+    volatilities: np.array of volatility values
+    signals: np.array of signal values
+    target_volatility: float, target volatility level
+    
+    Returns:
+    tuple of numpy arrays (total_capitals, block_values, vol_targs, vol_scalars, position_sizes, daily_pnls)
+    """
+    length = len(closes)
+    initial_capital = 1000.0
+    
+    # Create arrays for calculations
+    total_capitals = np.zeros(length, dtype=np.float64)
+    block_values = np.zeros(length, dtype=np.float64)
+    vol_targs = np.zeros(length, dtype=np.float64)
+    vol_scalars = np.zeros(length, dtype=np.float64)
+    position_sizes = np.zeros(length, dtype=np.float64)
+    max_position = np.zeros(length, dtype=np.float64)
+    daily_pnls = np.zeros(length, dtype=np.float64)
+    
+    # Set initial capital
+    total_capitals[0] = initial_capital
+    
+    # Iterate through the data
+    for i in range(1, length):
+        # Block value calculation
+        block_values[i] = volatilities[i-1] * closes[i-1] * np.sqrt(365.0)
+        
+        # Volatility targeting
+        vol_targs[i] = target_volatility * total_capitals[i-1]
+        
+        # Volatility scalar
+        if block_values[i] != 0:
+            vol_scalars[i] = vol_targs[i] / block_values[i]
+        
+        # Position size calculation
+        position_sizes[i] = ( signals[i-1] * vol_scalars[i] ) / 10
+        
+        # Clip position size based on available capital
+        if closes[i] != 0:
+            max_position[i] = total_capitals[i-1] / closes[i]
+            position_sizes[i] = min(max_position[i], max(position_sizes[i], -max_position[i]))
+        
+        # Calculate daily PnL
+        if i < length - 1:
+            daily_pnls[i] = position_sizes[i] * (closes[i + 1] - closes[i])
+            
+        # Update total capital
+        total_capitals[i] = total_capitals[i-1] + daily_pnls[i]
+        total_capitals[i] = max(0.0, total_capitals[i])
+    
+    return total_capitals, block_values, vol_targs, vol_scalars, position_sizes, max_position, daily_pnls
+
+# Wrapper function to handle pandas DataFrame input/output
+def process_dataframe_for_volatility_targeting(df, signal_col, target_volatility):
+    """
+    Wrapper function to handle DataFrame input/output for the Numba-optimized function.
+    """
+    # Extract numpy arrays
+    closes = df['close'].values.astype(np.float64)
+    volatilities = df['volatility'].values.astype(np.float64)
+    signals = df[signal_col].values.astype(np.float64)
+    
+    # Run Numba-optimized calculation
+    results = volatility_targeting_with_signal_numba(
+        closes, volatilities, signals, target_volatility
+    )
+    
+    # Update DataFrame with results
+    df['total_capital'] = results[0]
+    df['block_value'] = results[1]
+    df['vol_targ'] = results[2]
+    df['vol_scalar'] = results[3]
+    df['position_size'] = results[4]
+    df['max_position_size'] = results[5]
+    df['daily_pnl'] = results[6]
+    
+    return df
+
+# Usage with your loop
+for symbol in ['BTCUSDT', 'ETHUSDT', 'ICPUSDT', 'TRXUSDT',
+ 'ADAUSDT', 'LTCUSDT', 'STXUSDT', 'XLMUSDT',
+ 'BNBUSDT', 'XRPUSDT', 'BCHUSDT', 'MKRUSDT',
+ 'ETCUSDT', 'SUIUSDT', 'EOSUSDT', 'IOTAUSDT',
+ 'LINKUSDT', 'APTUSDT', 'XTZUSDT', 'NEOUSDT',
+ 'VETUSDT', 'FILUSDT', 'ATOMUSDT',
+ 'AVAXUSDT', 'SHIBUSDT', 'UNIUSDT', 'SEIUSDT',
+ 'SOLUSDT', 'NEARUSDT', 'RNDRUSDT', 'OPUSDT',
+ 'DOGEUSDT', 'FLOKIUSDT', 'INJUSDT', 'RUNEUSDT']: #list(klines_data.keys()):
+ ## This is the sliced top 10 decile list of coins that we research.
+    process_dataframe_for_volatility_targeting(
+        new_dict_copy[symbol], 
+        'ewmac_breakout_and_bolmom_and_fc', 
+        0.42
+    )
+
+
+# Below is the plot of the position size, we get daily and the price of the asset
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def pos_size_graph(frame, symbol):
+   
+    # Create a subplot with 2 rows and shared x-axis
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                    row_heights=[0.5, 0.5],  # Adjust row heights
+                    vertical_spacing=0.05  # Spacing between the subplots
+                       )
+
+    # Add the price line chart
+    fig.add_trace(go.Scatter(x = frame[symbol]['timestamp'], 
+                             y = frame[symbol]['close'], 
+                             mode = 'lines', 
+                             name = 'Price', 
+                             line = dict(color = 'black'))
+                  , row=1, col=1)
+    
+    # Color the position size depending on whether it's positive or negative
+    fig.add_trace(go.Bar(
+    x = frame[symbol]['timestamp'],
+    y = ( (frame[symbol]['position_size'] * frame[symbol]['close'])/frame[symbol]['total_capital'].shift(1) ),
+    marker_color = ['red' if size < 0 else 'green' for size in ( (frame[symbol]['position_size'] * frame[symbol]['close'])/frame[symbol]['total_capital'].shift(1) )],
+    name = 'Position Size',
+    hovertemplate=
+    '<b>Datetime:</b> %{x}<br>' +  # Show datetime
+    '<b>Position Size:</b> %{y}<br>' +     # Show position size
+    '<b>Signal Score:</b> %{customdata}<extra></extra>', # Show signal score
+    customdata = frame[symbol]['ewmac_breakout_and_bolmom']    
+    ), row=2, col=1)
+
+    # Update layout for better visualization
+    fig.update_layout(
+        height = 700,  # Adjust height of the entire figure
+        showlegend = False,  # Disable legend
+        title=f"Price and Position Size based on EWMAC Breakout and Bolmom Signal for {symbol}",
+        template = 'seaborn'
+    )
+
+    # Customize axes labels
+    fig.update_xaxes(title_text = "Datetime", row=2, col=1)
+    fig.update_yaxes(title_text = "Price", row=1, col=1)
+    fig.update_yaxes(title_text = "Relative Position Size", row=2, col=1)
+
+    # Show the figure
+    fig.show()
+
+pos_size_graph(klines_data, 'SOLUSDT')
+    
