@@ -199,16 +199,36 @@ We find out that trend features work the best at the first week and then gradual
 All in all we conclude that trend is a weak but robust edge and works better when adjusting for the volatility of the trading universe's assets.
 
 
+**4) position sizing**:
+
+We now have our daily forecast, that is scaled across our trading universe and we want to size appropriately our positions. To do this we will pick an annual volatility target that we want our capital to have 
+and together witht the forecast score we will determine the ideal target position.
+To apply a volatility target to our position we need two things:
+
+1) **block value**: this is the daily volatility forecast annualized times the daily close price. 
+   This way we get an idea of the daily cash volatility of the asset we are trading. Now we need to divide this by our **annual cash volatility target**.
+2) **annual cash volatility target**: this is the annual volatility we want to target times our total trading capital. Since this will be changing based on profit/loss and we want to keep our vol. target 
+   the same throughout our trading course, we will calculate it based on the changing capital based on daily pnl. For that reason we will show a naive backtest to get an idea of how would it work. 
+
+Finally we calculate the **volatility scalar** which is our annual cash volatility target divided by the block value. After that our position size is a mere multiplication of the vol. scalar times our signal score, and then we divide this product with the long term average absolute value of the forecast: 10.
+
+      
+**Note**: The annual volatility target is a long term average and we don't expect to reach it every single year. 
+We need to acknowledge that:
+i) our vol. forecast is a very naive one, we just use a rolling mean of the previous month's vol. 
+ii) our position size is a product of the forecast score too, so sometimes it might give bigger size than the vol. only calculation would allow.
+
+Here is a preview of how this would work on the run up in 2023 till the June of 2024:
+
+![image](https://github.com/user-attachments/assets/9f3c095e-60ae-4a49-a0ba-f38fa2ec1091)
+
+As we can see our position constantly changes as the price of SOL/USDT rises, depending on the forecast score and the forecasted volatility.
+What is notable is on March 20, we had a forecast of +16 (out of 20), but our position was 0.50 of our total capital, due to the previous day's rising vol.
+
+![image](https://github.com/user-attachments/assets/104b15eb-ea99-41e9-9b22-b61614c26816)
+
+
 **Roadmap**: 
 
 **i)** Show how to modify the data fetching function, so we can update daily our dictionary without needing to redownload the data. 
-
-**ii)** Show position sizing, based on volatiltiy targeting.
-
-      Below is a showcase of how a continuous forecast looks.
-
-![image](https://github.com/user-attachments/assets/1e950201-8656-42dc-8455-85fbadd7ae27)
-
-
-
-**iii)** Update daily the live performance of an implementation of a trend following strategy.
+**ii)** Update daily the live performance of an implementation of a trend following strategy.
