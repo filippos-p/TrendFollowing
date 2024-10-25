@@ -227,7 +227,7 @@ What is notable is on March 20, we had a forecast of +16 (out of 20), but our po
 
 ![image](https://github.com/user-attachments/assets/104b15eb-ea99-41e9-9b22-b61614c26816)
 
-
+In the future we will introduce buffering techniques, so (hopefully) we won't trade daily, but only when we are over/under our allowed buffer edge. This way we will reduce trading costs.
 **Roadmap**: 
 
 **i)** Show how to modify the data fetching function, so we can update daily our dictionary without needing to redownload the data. 
