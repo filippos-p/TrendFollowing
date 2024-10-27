@@ -10,7 +10,7 @@ For this process four files will be created:
       4) research : will show our findings.
 
 
-**1) data_fetching:**
+**1) data fetching:**
 
 The first two functions (**generate_dates**, **split_list_into_chunks**) are created due to Binance's API limit requests. For the data that we need there is a limit of 1000 data points per request.
 In our research we will use daily data from 2018, with each day corresponding to one data point. So we need to split our dates in batches of 1000 days.
@@ -217,15 +217,24 @@ Finally we calculate the **volatility scalar** which is our annual cash volatili
 We need to acknowledge that:
 i) our vol. forecast is a very naive one, we just use a rolling mean of the previous month's vol. 
 ii) our position size is a product of the forecast score too, so sometimes it might give bigger size than the vol. only calculation would allow.
+iii) we expect our realized volatility on a portfolio level to be different (lower actually) than our target.
+This is because our assets are correlated and so we can show that:
+
+![3451aeb7-e886-468f-804a-8568687f3329](https://github.com/user-attachments/assets/bedbd0ea-6c70-43ae-9dc8-239ecc1198af)
+
+![1a99c0be-3cf0-44d9-b8ce-ae92b1a65763](https://github.com/user-attachments/assets/5b33584f-b2f8-4a50-8362-ac2634468c4f)
+
+It is clear that the variance can be summed only for uncorrelated variables.
 
 Here is a preview of how this would work on the run up in 2023 till the June of 2024:
 
 ![image](https://github.com/user-attachments/assets/9f3c095e-60ae-4a49-a0ba-f38fa2ec1091)
 
 As we can see our position constantly changes as the price of SOL/USDT rises, depending on the forecast score and the forecasted volatility.
-What is notable is on March 20, we had a forecast of +16 (out of 20), but our position was 0.50 of our total capital, due to the previous day's rising vol.
+What is notable is on November 20 of 2023, we had a forecast of +18 (out of 20), but our position was 0.70 of our total capital, due to the previous day's rising vol.
 
-![image](https://github.com/user-attachments/assets/104b15eb-ea99-41e9-9b22-b61614c26816)
+<img width="664" alt="image" src="https://github.com/user-attachments/assets/47231d29-b301-4be8-821e-b960e148a388">
+
 
 In the future we will introduce buffering techniques, so (hopefully) we won't trade daily, but only when we are over/under our allowed buffer edge. This way we will reduce trading costs.
 
