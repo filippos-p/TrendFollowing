@@ -169,3 +169,10 @@ combined_data['total_combined_daily_pnl'] = combined_data.filter(like='daily_pnl
 
 # We do this because the variance of each coin is not uncorrelated, since their returns are correlated.
 # So practically we can't sum their variances, that's why we will need to combine the capital and the daily pnl.
+
+# Calculate daily returns based on the combined capital and combined PnL
+combined_data['portfolio_daily_return'] = combined_data['total_combined_daily_pnl'] / combined_data['total_combined_capital'].shift(1)
+
+# Calculate the portfolio-level annualized volatility
+portfolio_annualized_volatility = combined_data['portfolio_daily_return'].std() * np.sqrt(365)
+portfolio_annualized_volatility
