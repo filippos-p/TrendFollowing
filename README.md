@@ -215,9 +215,13 @@ Finally we calculate the **volatility scalar** which is our annual cash volatili
       
 **Note**: The annual volatility target is a long term average and we don't expect to reach it every single year. 
 We need to acknowledge that:
+
 i) our vol. forecast is a very naive one, we just use a rolling mean of the previous month's vol. 
+
 ii) our position size is a product of the forecast score too, so sometimes it might give bigger size than the vol. only calculation would allow.
+
 iii) we expect our realized volatility on a portfolio level to be different (lower actually) than our target.
+
 This is because our assets are correlated and so we can show that:
 
 ![3451aeb7-e886-468f-804a-8568687f3329](https://github.com/user-attachments/assets/bedbd0ea-6c70-43ae-9dc8-239ecc1198af)
