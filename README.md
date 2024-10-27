@@ -224,9 +224,8 @@ iii) we expect our realized volatility on a portfolio level to be different (low
 
 This is because our assets are correlated and so we can show that:
 
-![3451aeb7-e886-468f-804a-8568687f3329](https://github.com/user-attachments/assets/bedbd0ea-6c70-43ae-9dc8-239ecc1198af)
+![variance_calc](https://github.com/user-attachments/assets/53b49597-34bc-421c-90e4-f97ed4b66ed2)
 
-![1a99c0be-3cf0-44d9-b8ce-ae92b1a65763](https://github.com/user-attachments/assets/5b33584f-b2f8-4a50-8362-ac2634468c4f)
 
 It is clear that the variance can be summed only for uncorrelated variables.
 
