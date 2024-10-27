@@ -145,3 +145,27 @@ def pos_size_graph(frame, symbol):
 
 pos_size_graph(klines_data, 'SOLUSDT')
     
+# For reasons explained in the README file we won't sum the variances from each coin. 
+# Instead we will create the combined capital DataFrame.
+
+# Initialize an empty DataFrame to hold combined values
+combined_data = pd.DataFrame()
+
+# Loop through each symbol in the dictionary and align 'total_capital' and 'daily_pnl' by date
+for symbol, df in klines_data.items():
+    capital_pnl_df = df[['timestamp', 'total_capital', 'daily_pnl']].set_index('timestamp')  # Use timestamp as index
+    if combined_data.empty:
+        combined_data = capital_pnl_df
+    else:
+        # Align dates and add suffixes to avoid column name conflicts
+        combined_data = combined_data.join(capital_pnl_df, how='outer', rsuffix=f'_{symbol}')  
+
+# Fill NaNs with 0 to ensure accurate summing
+combined_data.fillna(0, inplace=True)
+
+# Sum up 'total_capital' columns and 'daily_pnl' columns separately
+combined_data['total_combined_capital'] = combined_data.filter(like='total_capital').sum(axis=1)
+combined_data['total_combined_daily_pnl'] = combined_data.filter(like='daily_pnl').sum(axis=1)
+
+# We do this because the variance of each coin is not uncorrelated, since their returns are correlated.
+# So practically we can't sum their variances, that's why we will need to combine the capital and the daily pnl.
