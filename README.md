@@ -229,9 +229,9 @@ This is because our assets are correlated and so we can show that:
 
 It is clear that the variance can be summed only for uncorrelated variables.
 
-Here is a preview of how this would work on the run up in 2023 till the June of 2024:
+Here is a preview of how this would work on the run up in 2023 till the May of 2024:
 
-![image](https://github.com/user-attachments/assets/9f3c095e-60ae-4a49-a0ba-f38fa2ec1091)
+<img width="740" alt="image" src="https://github.com/user-attachments/assets/03e1efad-75a9-4d61-8eec-c1f6f34b3abb">
 
 As we can see our position constantly changes as the price of SOL/USDT rises, depending on the forecast score and the forecasted volatility.
 What is notable is on November 20 of 2023, we had a forecast of +18 (out of 20), but our position was 0.70 of our total capital, due to the previous day's rising vol.
