@@ -88,7 +88,7 @@ for symbol in ['BTCUSDT', 'ETHUSDT', 'ICPUSDT', 'TRXUSDT',
  ## This is the sliced top 10 decile list of coins that we research.
     process_dataframe_for_volatility_targeting(
         new_dict_copy[symbol], 
-        'ewmac_breakout_and_bolmom_and_fc', 
+        'ewmac_breakout_and_bolmom', 
         0.42
     )
 
@@ -124,7 +124,8 @@ def pos_size_graph(frame, symbol):
     '<b>Datetime:</b> %{x}<br>' +  # Show datetime
     '<b>Position Size:</b> %{y}<br>' +     # Show position size
     '<b>Signal Score:</b> %{customdata}<extra></extra>', # Show signal score
-    customdata = frame[symbol]['ewmac_breakout_and_bolmom']    
+    customdata = frame[symbol]['ewmac_breakout_and_bolmom'].shift(1) # Our signals are created on today's closing prices, so we shift them by one day to avoid lookahead bias
+    # As a result our position size for the day is based on yesterday's signal
     ), row=2, col=1)
 
     # Update layout for better visualization
